@@ -8,6 +8,7 @@ Original file is located at
 """
 import chainer
 import chainer.links as L
+import chainer.functions as F
 
 # test test
 def plot_train_test_by_q(train_env, test_env, Q, algorithm_name):
