@@ -12,6 +12,7 @@ import chainer
 import chainer.functions as F
 import chainer.links as L
 from plotly import tools
+from plotly.graph_objs import Scatter
 
 # test test
 def plot_train_test_by_q(train_env, test_env, Q, algorithm_name):
