@@ -7,8 +7,11 @@ Original file is located at
     https://colab.research.google.com/drive/1kJTLwFrB5h6iqsX-YzBYMmbMl3tDjH0_
 """
 import chainer
-import chainer.links as L
+
+
 import chainer.functions as F
+import chainer.links as L
+from plotly import tools
 
 # test test
 def plot_train_test_by_q(train_env, test_env, Q, algorithm_name):
