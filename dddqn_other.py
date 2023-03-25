@@ -207,6 +207,11 @@ class Environment1:
         self.history = [0 for _ in range(self.history_t)]
         return [self.position_value] + self.history # obs
     
+    def total_value(self):  # 添加 total_value 方法
+        current_position_value = sum(self.positions)  # 当前持仓的价值
+        total_asset_value = self.profits + current_position_value  # 总资产值等于累积利润加上当前持仓的价值
+        return total_asset_value
+    
     def step(self, act):
         reward = 0
         
