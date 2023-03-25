@@ -189,8 +189,6 @@ class Q_Network(chainer.Chain):
         def reset(self):
             self.zerograds()
 
-# %%writefile Environment1.py
-
 class Environment1:
     
     def __init__(self, data, history_t=90):
