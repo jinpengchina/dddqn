@@ -190,7 +190,9 @@ class Q_Network(chainer.Chain):
             self.zerograds()
 
 class Environment1:
-    
+    self.init_assets = 1000000  # 初始资产为 1000000 美元
+    self.assets = self.init_assets  # 将当前资产设置为初始资产
+
     def __init__(self, data, history_t=90):
         self.data = data
         self.history_t = history_t
