@@ -221,7 +221,7 @@ class Environment1:
         total_asset_value = self.current_capital + current_position_value
         return total_asset_value
 
-        def step(self, act):
+    def step(self, act):
         reward = 0
 
         # act = 0: stay, 1: buy, 2: sell
