@@ -221,36 +221,39 @@ class Environment1:
         total_asset_value = self.current_capital + current_position_value
         return total_asset_value
 
-    def step(self, act):
+        def step(self, act):
         reward = 0
-        kelly_bet_percentage = self.kelly_bet()
-        trade_amount = self.current_capital * kelly_bet_percentage
 
         # act = 0: stay, 1: buy, 2: sell
         if act == 1:
-            num_shares_to_buy = trade_amount // self.data.iloc[self.t, :]['Close']
-            if num_shares_to_buy > 0:
-                self.positions.append((num_shares_to_buy, self.data.iloc[self.t, :]['Close']))
-                self.current_capital -= num_shares_to_buy * self.data.iloc[self.t, :]['Close'] * (1 + self.transaction_fee)
-
-        elif act == 2: # sell
+            trade_amount = self.kelly_criterion() * self.total_value()
+            self.positions.append((self.data.iloc[self.t, :]['Close'], trade_amount))
+            print(f"Buy at {self.data.iloc[self.t, :]['Close']} with amount {trade_amount}")
+        elif act == 2:  # sell
             if len(self.positions) == 0:
                 reward = -1
             else:
                 profits = 0
-                for p in self.positions:
-                    num_shares, buy_price = p
-                    profits += num_shares * (self.data.iloc[self.t, :]['Close'] - buy_price)
+                for p, trade_amount in self.positions:
+                    profit = (self.data.iloc[self.t, :]['Close'] - p) * trade_amount
+                    profits += profit
                 reward += profits
                 self.profits += profits
-                self.current_capital += sum([p[0] * self.data.iloc[self.t, :]['Close'] for p in self.positions]) * (1 - self.transaction_fee)
                 self.positions = []
+                print(f"Sell at {self.data.iloc[self.t, :]['Close']} with profit {profits}")
 
         # set next time
         self.t += 1
-        self.position_value = sum([p[0] * (self.data.iloc[self.t, :]['Close'] - p[1]) for p in self.positions])
+        self.position_value = 0
+        for p, trade_amount in self.positions:
+            self.position_value += (self.data.iloc[self.t, :]['Close'] - p) * trade_amount
         self.history.pop(0)
-        self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t-1), :]['Close'])
+        self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t - 1), :]['Close'])
+
+        current_position_value = sum([trade_amount for _, trade_amount in self.positions])
+        print(f"Current position value: {current_position_value}")
+        total_asset_value = self.profits + current_position_value
+        print(f"Total asset value: {total_asset_value}")
 
         # clipping reward
         if reward > 0:
@@ -258,9 +261,4 @@ class Environment1:
         elif reward < 0:
             reward = -1
 
-       
-        # Check if done
-        if self.t == len(self.data) - 1:
-            self.done = True
-
-        return [self.position_value] + self.history, reward, self.done # obs, reward, done
+        return [self.position_value] + self.history, reward, self.done  # obs, reward, done
