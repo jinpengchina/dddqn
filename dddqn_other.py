@@ -228,7 +228,7 @@ class Environment1:
         if act == 1:
             trade_amount = self.kelly_criterion() * self.total_value()
             self.positions.append((self.data.iloc[self.t, :]['Close'], trade_amount))
-            print(f"Buy at {self.data.iloc[self.t, :]['Close']} with amount {trade_amount}")
+            logger.debug(f"Buy at {self.data.iloc[self.t, :]['Close']} with amount {trade_amount}")
         elif act == 2:  # sell
             if len(self.positions) == 0:
                 reward = -1
@@ -240,7 +240,7 @@ class Environment1:
                 reward += profits
                 self.profits += profits
                 self.positions = []
-                print(f"Sell at {self.data.iloc[self.t, :]['Close']} with profit {profits}")
+                logger.debug(f"Sell at {self.data.iloc[self.t, :]['Close']} with profit {profits}")
 
         # set next time
         self.t += 1
@@ -251,9 +251,9 @@ class Environment1:
         self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t - 1), :]['Close'])
 
         current_position_value = sum([trade_amount for _, trade_amount in self.positions])
-        print(f"Current position value: {current_position_value}")
+        logger.debug(f"Current position value: {current_position_value}")
         total_asset_value = self.profits + current_position_value
-        print(f"Total asset value: {total_asset_value}")
+        logger.debug(f"Total asset value: {total_asset_value}")
 
         # clipping reward
         if reward > 0:
