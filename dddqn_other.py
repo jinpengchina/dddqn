@@ -48,6 +48,22 @@ from plotly.offline import init_notebook_mode, iplot, iplot_mpl
 import dddqn.dddqn_other
 
 # test test
+import logging
+
+logger = logging.getLogger("TradingEnv")
+logger.setLevel(logging.DEBUG)
+
+# 创建一个文件处理器，将日志消息写入文件
+file_handler = logging.FileHandler("trading_env.log")
+file_handler.setLevel(logging.DEBUG)
+
+# 创建一个格式器，定义日志消息的格式
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# 将文件处理器添加到日志记录器
+logger.addHandler(file_handler)
+
 
 def plot_train_test(train, test, date_split):
     
