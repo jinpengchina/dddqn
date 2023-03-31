@@ -190,15 +190,14 @@ class Q_Network(chainer.Chain):
             self.zerograds()
 
 import numpy as np
-
 class Environment1:
-    def __init__(self, data, history_t=90, initial_capital=10000, transaction_fee=0.001, kelly_fraction=0.25, win_probability=0.55, win_loss_ratio=1.0):
+    def __init__(self, data, history_t=90, initial_capital=10000, transaction_fee=0.001, kelly_fraction=0.25, win_rate=0.55, win_loss_ratio=1.0):
         self.data = data
         self.history_t = history_t
         self.initial_capital = initial_capital
         self.transaction_fee = transaction_fee
         self.kelly_fraction = kelly_fraction
-        self.win_probability = win_probability
+        self.win_rate = win_rate
         self.win_loss_ratio = win_loss_ratio
         self.reset()
 
@@ -208,45 +207,50 @@ class Environment1:
         self.profits = 0
         self.positions = []
         self.position_value = 0
-        self.capital = self.initial_capital
         self.history = [0 for _ in range(self.history_t)]
-        return [self.position_value] + self.history  # obs
+        self.current_capital = self.initial_capital
+        return [self.position_value] + self.history # obs
+
+    def kelly_bet(self):
+        edge = (self.win_rate - (1 - self.win_rate) / self.win_loss_ratio)
+        kelly_bet_percentage = self.kelly_fraction * edge
+        return kelly_bet_percentage
 
     def total_value(self):
-        current_position_value = sum(self.positions)  # 当前持仓的价值
-        total_asset_value = self.capital + current_position_value  # 总资产值等于剩余资金加上当前持仓的价值
+        current_position_value = sum(self.positions)
+        total_asset_value = self.current_capital + current_position_value
         return total_asset_value
-    
-    def kelly_bet(self):
-        kelly_bet_percentage = self.kelly_fraction * (self.win_probability - (1 - self.win_probability) / self.win_loss_ratio)
-        return kelly_bet_percentage
 
     def step(self, act):
         reward = 0
-        trade_amount = self.capital * self.kelly_bet()
+        kelly_bet_percentage = self.kelly_bet()
+        trade_amount = self.current_capital * kelly_bet_percentage
 
         # act = 0: stay, 1: buy, 2: sell
         if act == 1:
-            if self.capital >= trade_amount * (1 + self.transaction_fee):
-                self.positions.append(trade_amount)
-                self.capital -= trade_amount * (1 + self.transaction_fee)
-        elif act == 2:  # sell
+            num_shares_to_buy = trade_amount // self.data.iloc[self.t, :]['Close']
+            if num_shares_to_buy > 0:
+                self.positions.append((num_shares_to_buy, self.data.iloc[self.t, :]['Close']))
+                self.current_capital -= num_shares_to_buy * self.data.iloc[self.t, :]['Close'] * (1 + self.transaction_fee)
+
+        elif act == 2: # sell
             if len(self.positions) == 0:
                 reward = -1
             else:
-                sell_amount = sum(self.positions)
-                sell_value = self.data.iloc[self.t, :]['Close'] * sell_amount
-                self.profits += sell_value - sell_amount
-                self.capital += sell_value * (1 - self.transaction_fee)
+                profits = 0
+                for p in self.positions:
+                    num_shares, buy_price = p
+                    profits += num_shares * (self.data.iloc[self.t, :]['Close'] - buy_price)
+                reward += profits
+                self.profits += profits
+                self.current_capital += sum([p[0] * self.data.iloc[self.t, :]['Close'] for p in self.positions]) * (1 - self.transaction_fee)
                 self.positions = []
 
         # set next time
         self.t += 1
-        self.position_value = 0
-        for p in self.positions:
-            self.position_value += (self.data.iloc[self.t, :]['Close'] - p)
+        self.position_value = sum([p[0] * (self.data.iloc[self.t, :]['Close'] - p[1]) for p in self.positions])
         self.history.pop(0)
-        self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t - 1), :]['Close'])
+        self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t-1), :]['Close'])
 
         # clipping reward
         if reward > 0:
@@ -254,4 +258,9 @@ class Environment1:
         elif reward < 0:
             reward = -1
 
-        return [self.position_value] + self.history, reward, self.done  # obs, reward, done
+       
+        # Check if done
+        if self.t == len(self.data) - 1:
+            self.done = True
+
+        return [self.position_value] + self.history, reward, self.done # obs, reward, done
