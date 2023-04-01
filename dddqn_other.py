@@ -207,14 +207,13 @@ class Q_Network(chainer.Chain):
 
 import numpy as np
 class Environment1:
-    def __init__(self, data, history_t=90, initial_capital=10000, transaction_fee=0.001, kelly_fraction=0.25, win_rate=0.55, win_loss_ratio=1.0):
+
+    def __init__(self, data, history_t=90, initial_cash_value=10000, trade_value=1000):
         self.data = data
         self.history_t = history_t
-        self.initial_capital = initial_capital
-        self.transaction_fee = transaction_fee
-        self.kelly_fraction = kelly_fraction
-        self.win_rate = win_rate
-        self.win_loss_ratio = win_loss_ratio
+        self.initial_cash_value = initial_cash_value
+        self.trade_value = trade_value
+        self.initial_total_value = initial_cash_value
         self.reset()
 
     def reset(self):
@@ -223,53 +222,39 @@ class Environment1:
         self.profits = 0
         self.positions = []
         self.position_value = 0
+        self.cash_value = self.initial_cash_value
         self.history = [0 for _ in range(self.history_t)]
-        self.current_capital = self.initial_capital
         return [self.position_value] + self.history # obs
 
-    def kelly_bet(self):
-        edge = (self.win_rate - (1 - self.win_rate) / self.win_loss_ratio)
-        kelly_bet_percentage = self.kelly_fraction * edge
-        return kelly_bet_percentage
-
     def total_value(self):
-        current_position_value = sum(self.positions)
-        total_asset_value = self.current_capital + current_position_value
-        return total_asset_value
+        return self.position_value + self.cash_value
 
     def step(self, act):
         reward = 0
 
         # act = 0: stay, 1: buy, 2: sell
         if act == 1:
-            trade_amount = self.kelly_criterion() * self.total_value()
-            self.positions.append((self.data.iloc[self.t, :]['Close'], trade_amount))
-            logger.debug(f"Buy at {self.data.iloc[self.t, :]['Close']} with amount {trade_amount}")
-        elif act == 2:  # sell
+            self.positions.append(self.data.iloc[self.t, :]['Close'])
+            self.cash_value -= self.trade_value
+        elif act == 2: # sell
             if len(self.positions) == 0:
                 reward = -1
             else:
                 profits = 0
-                for p, trade_amount in self.positions:
-                    profit = (self.data.iloc[self.t, :]['Close'] - p) * trade_amount
-                    profits += profit
+                for p in self.positions:
+                    profits += (self.data.iloc[self.t, :]['Close'] - p)
                 reward += profits
                 self.profits += profits
                 self.positions = []
-                logger.debug(f"Sell at {self.data.iloc[self.t, :]['Close']} with profit {profits}")
+                self.cash_value += self.trade_value * len(self.positions)
 
         # set next time
         self.t += 1
         self.position_value = 0
-        for p, trade_amount in self.positions:
-            self.position_value += (self.data.iloc[self.t, :]['Close'] - p) * trade_amount
+        for p in self.positions:
+            self.position_value += (self.data.iloc[self.t, :]['Close'] - p)
         self.history.pop(0)
-        self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t - 1), :]['Close'])
-
-        current_position_value = sum([trade_amount for _, trade_amount in self.positions])
-        logger.debug(f"Current position value: {current_position_value}")
-        total_asset_value = self.profits + current_position_value
-        logger.debug(f"Total asset value: {total_asset_value}")
+        self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t-1), :]['Close'])
 
         # clipping reward
         if reward > 0:
@@ -277,4 +262,4 @@ class Environment1:
         elif reward < 0:
             reward = -1
 
-        return [self.position_value] + self.history, reward, self.done  # obs, reward, done
+        return [self.position_value] + self.history, reward, self.done # obs, reward, done
