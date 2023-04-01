@@ -208,11 +208,12 @@ class Q_Network(chainer.Chain):
 import numpy as np
 class Environment1:
 
-    def __init__(self, data, history_t=90, initial_cash_value=10000, trade_value=1000):
+    def __init__(self, data, history_t=90, initial_cash_value=10000, trade_value=1000, transaction_fee=0.002):
         self.data = data
         self.history_t = history_t
         self.initial_cash_value = initial_cash_value
         self.trade_value = trade_value
+        self.transaction_fee = transaction_fee
         self.initial_total_value = initial_cash_value
         self.reset()
 
@@ -235,7 +236,8 @@ class Environment1:
         # act = 0: stay, 1: buy, 2: sell
         if act == 1:
             self.positions.append(self.data.iloc[self.t, :]['Close'])
-            self.cash_value -= self.trade_value
+            cost = self.trade_value * (1 + self.transaction_fee)
+            self.cash_value -= cost
         elif act == 2: # sell
             if len(self.positions) == 0:
                 reward = -1
@@ -246,7 +248,8 @@ class Environment1:
                 reward += profits
                 self.profits += profits
                 self.positions = []
-                self.cash_value += self.trade_value * len(self.positions)
+                revenue = self.trade_value * len(self.positions) * (1 - self.transaction_fee)
+                self.cash_value += revenue
 
         # set next time
         self.t += 1
