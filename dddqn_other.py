@@ -45,21 +45,21 @@ from plotly.graph_objs import *
 from plotly.offline import init_notebook_mode, iplot, iplot_mpl
 # init_notebook_mode()
 
-import logging
+# import logging
 
-logger = logging.getLogger("TradingEnv")
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger("TradingEnv")
+# logger.setLevel(logging.DEBUG)
 
-# 创建一个流处理器，将日志消息输出到标准输出（如Colab输出区域）
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
+# # 创建一个流处理器，将日志消息输出到标准输出（如Colab输出区域）
+# stream_handler = logging.StreamHandler()
+# stream_handler.setLevel(logging.DEBUG)
 
-# 创建一个格式器，定义日志消息的格式
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-stream_handler.setFormatter(formatter)
+# # 创建一个格式器，定义日志消息的格式
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# stream_handler.setFormatter(formatter)
 
-# 将流处理器添加到日志记录器
-logger.addHandler(stream_handler)
+# # 将流处理器添加到日志记录器
+# logger.addHandler(stream_handler)
 
 
 
