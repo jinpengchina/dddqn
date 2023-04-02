@@ -229,7 +229,6 @@ class Environment1:
 
     def total_value(self):
         return self.position_value + self.cash_value
-
     def step(self, act):
         reward = 0
 
@@ -238,7 +237,7 @@ class Environment1:
             self.positions.append(self.data.iloc[self.t, :]['Close'])
             cost = self.trade_value * (1 + self.transaction_fee)
             self.cash_value -= cost
-        elif act == 2: # sell
+        elif act == 2:  # sell
             if len(self.positions) == 0:
                 reward = -1
             else:
@@ -247,9 +246,9 @@ class Environment1:
                     profits += (self.data.iloc[self.t, :]['Close'] - p)
                 reward += profits
                 self.profits += profits
-                self.positions = []
                 revenue = self.trade_value * len(self.positions) * (1 - self.transaction_fee)
                 self.cash_value += revenue
+                self.positions = []
 
         # set next time
         self.t += 1
@@ -265,4 +264,4 @@ class Environment1:
         elif reward < 0:
             reward = -1
 
-        return [self.position_value] + self.history, reward, self.done # obs, reward, done
+        return [self.position_value] + self.history, reward, self.done  # obs, reward, done
