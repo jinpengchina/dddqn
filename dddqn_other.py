@@ -221,6 +221,7 @@ class Environment1:
         self.reset()
 
     def reset(self):
+        self.stock_count = 0
         self.t = 0
         self.done = False
         self.profits = 0
@@ -240,6 +241,8 @@ class Environment1:
             self.positions.append(self.data.iloc[self.t, :]['Close'])
             cost = self.trade_value * (1 + self.transaction_fee)
             self.cash_value -= cost
+            
+            self.stock_count += 1
         elif act == 2:  # sell
             if len(self.positions) == 0:
                 reward = -1
@@ -252,6 +255,8 @@ class Environment1:
                 revenue = self.trade_value * len(self.positions) * (1 - self.transaction_fee)
                 self.cash_value += revenue
                 self.positions = []
+            
+            self.stock_count = 0
 
         # set next time
         self.t += 1
@@ -263,7 +268,9 @@ class Environment1:
         
         self.position_value = 0
         for p in self.positions:
-            self.position_value += self.data.iloc[self.t, :]['Close']
+#             self.position_value += self.data.iloc[self.t, :]['Close']
+            self.position_value = self.stock_count * self.data.iloc[self.t, :]['Close']
+
 
     
     
