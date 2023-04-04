@@ -233,6 +233,14 @@ class Environment1:
 
     def total_value(self):
         return self.position_value + self.cash_value
+    
+    def get_current_stock_info(self):
+        stock_count = self.stock_count
+        current_stock_price = self.data.iloc[self.t, :]['Close']
+        total_stock_value = self.position_value
+
+        return stock_count, current_stock_price, total_stock_value
+    
     def step(self, act):
         reward = 0
 
