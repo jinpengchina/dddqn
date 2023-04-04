@@ -206,6 +206,9 @@ class Q_Network(chainer.Chain):
             self.zerograds()
 
 import numpy as np
+
+
+
 class Environment1:
 
     def __init__(self, data, history_t=90, initial_cash_value=10000, trade_value=1000, transaction_fee=0.002):
@@ -252,9 +255,18 @@ class Environment1:
 
         # set next time
         self.t += 1
+        
+#         self.position_value = 0
+        
+#         for p in self.positions:
+#             self.position_value += (self.data.iloc[self.t, :]['Close'] - p)
+        
         self.position_value = 0
         for p in self.positions:
-            self.position_value += (self.data.iloc[self.t, :]['Close'] - p)
+            self.position_value += self.data.iloc[self.t, :]['Close']
+
+    
+    
         self.history.pop(0)
         self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t-1), :]['Close'])
 
