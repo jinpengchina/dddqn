@@ -291,4 +291,12 @@ class Environment1:
         elif reward < 0:
             reward = -1
 
+        print("Step:", self.t)
+        print("Act:", act)
+        print("Stock count:", self.stock_count)
+        print("Positions:", self.positions)
+        print("Cash value:", self.cash_value)
+        print("Position value:", self.position_value)
+        print("Total value:", self.total_value())
+
         return [self.position_value] + self.history, reward, self.done  # obs, reward, done
