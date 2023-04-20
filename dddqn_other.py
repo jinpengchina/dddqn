@@ -276,5 +276,5 @@ class Environment1:
             reward = 1
         elif reward < 0:
             reward = -1
-
+# test asdf
         return [self.position_value] + self.history, reward, self.done
