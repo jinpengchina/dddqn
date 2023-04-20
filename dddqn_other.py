@@ -228,7 +228,8 @@ class Environment1:
         self.trade_amount = 0
         return [self.position_value] + self.history
 
-    def total_wealth(self):
+    # def total_wealth(self):
+    def total_value(self):
         current_price = self.data.iloc[self.t, :]['Close']
         btc_value = self.btc_held * current_price
         return self.capital + btc_value
