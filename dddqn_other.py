@@ -236,6 +236,14 @@ class Environment1:
 
     def get_btc_held(self):
         return self.btc_held
+ 
+    def get_current_stock_info(self):
+        # 在此处添加逻辑以获取所需的股票信息
+        # 例如：
+        stock_num = len(self.positions)
+        stock_price = self.data.iloc[self.t, :]['Close']
+        stock_asset_total = self.btc_held * stock_price
+        return stock_num, stock_price, stock_asset_total
 
     def step(self, act):
         reward = 0
