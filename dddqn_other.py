@@ -207,15 +207,13 @@ class Q_Network(chainer.Chain):
 
 import numpy as np
 
-
 class Environment1:
-
-    def __init__(self, data, history_t=90, initial_capital=10000):
+    
+    def __init__(self, data, history_t=90):
         self.data = data
         self.history_t = history_t
-        self.initial_capital = initial_capital
         self.reset()
-
+        
     def reset(self):
         self.t = 0
         self.done = False
@@ -223,67 +221,37 @@ class Environment1:
         self.positions = []
         self.position_value = 0
         self.history = [0 for _ in range(self.history_t)]
-        self.capital = self.initial_capital
-        self.btc_held = 0
-        self.trade_amount = 0
-        return [self.position_value] + self.history
-
-    # def total_wealth(self):
-    def total_value(self):
-        current_price = self.data.iloc[self.t, :]['Close']
-        btc_value = self.btc_held * current_price
-        return self.capital + btc_value
-
-    def get_btc_held(self):
-        return self.btc_held
- 
-    def get_current_stock_info(self):
-        # 在此处添加逻辑以获取所需的股票信息
-        # 例如：
-        stock_num = len(self.positions)
-        stock_price = self.data.iloc[self.t, :]['Close']
-        stock_asset_total = self.btc_held * stock_price
-        return stock_num, stock_price, stock_asset_total
-
+        return [self.position_value] + self.history # obs
+    
     def step(self, act):
         reward = 0
-
+        
         # act = 0: stay, 1: buy, 2: sell
-        current_price = self.data.iloc[self.t, :]['Close']
-
         if act == 1:
-            self.trade_amount_usd = self.capital * 0.1
-            self.trade_amount = self.trade_amount_usd / current_price
-            self.positions.append((self.trade_amount, current_price))
-            self.btc_held += self.trade_amount
-            self.capital -= self.trade_amount_usd
-
-        elif act == 2:  # sell
+            self.positions.append(self.data.iloc[self.t, :]['Close'])
+        elif act == 2: # sell
             if len(self.positions) == 0:
                 reward = -1
             else:
                 profits = 0
-                for p, bought_price in self.positions:
-                    profits += (current_price - bought_price) * p
+                for p in self.positions:
+                    profits += (self.data.iloc[self.t, :]['Close'] - p)
                 reward += profits
                 self.profits += profits
-                self.capital += self.btc_held * current_price
-                self.trade_amount_usd = self.btc_held * current_price
                 self.positions = []
-                self.btc_held = 0
-
+        
         # set next time
         self.t += 1
         self.position_value = 0
-        for p, bought_price in self.positions:
-            self.position_value += (self.data.iloc[self.t, :]['Close'] - bought_price) * p
+        for p in self.positions:
+            self.position_value += (self.data.iloc[self.t, :]['Close'] - p)
         self.history.pop(0)
         self.history.append(self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t-1), :]['Close'])
-
+        
         # clipping reward
         if reward > 0:
             reward = 1
         elif reward < 0:
             reward = -1
-# test asdf
-        return [self.position_value] + self.history, reward, self.done
+        
+        return [self.position_value] + self.history, reward, self.done # obs, reward, done
